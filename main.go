@@ -69,6 +69,11 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if newUser.FirstName == "" || newUser.LastName == "" || newUser.Birthdate == "" || newUser.Biography == "" || newUser.City == "" || newUser.Password == "" {
+		http.Error(w, "All fields are required", http.StatusBadRequest)
+		return
+	}
+
 	birthdate, err := time.Parse("2006-01-02", newUser.Birthdate)
 	if err != nil {
 		http.Error(w, "Invalid birthdate format. Use YYYY-MM-DD.", http.StatusBadRequest)
