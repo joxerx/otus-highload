@@ -17,12 +17,13 @@ import (
 var db *sql.DB
 
 type User struct {
+	ID        string `json:"id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Birthdate string `json:"birthdate"`
 	Biography string `json:"biography"`
 	City      string `json:"city"`
-	Password  string `json:"password"`
+	Password  string `json:"password,omitempty"`
 }
 
 func main() {
@@ -31,6 +32,9 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/user/register", registerUserHandler).Methods("POST")
+	router.HandleFunc("/user/get/{id}", getUserHandler).Methods("GET")
+
+	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("GO_PORT"), router))
 }
 
@@ -86,15 +90,39 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec(
-		"INSERT INTO users (first_name, last_name, birthdate, biography, city, password) VALUES ($1, $2, $3, $4, $5, $6)",
+	var userID string
+	err = db.QueryRow(
+		"INSERT INTO users (first_name, last_name, birthdate, biography, city, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		newUser.FirstName, newUser.LastName, birthdate, newUser.Biography, newUser.City, hashedPassword,
-	)
+	).Scan(&userID)
 	if err != nil {
 		http.Error(w, "Error inserting user into db", http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("User created successfully"))
+	response := map[string]string{"user_id": userID}
+	json.NewEncoder(w).Encode(response)
+}
+
+func getUserHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["id"]
+
+	var user User
+	err := db.QueryRow("SELECT id, first_name, last_name, birthdate, biography, city FROM users WHERE id = $1", userID).Scan(
+		&user.ID, &user.FirstName, &user.LastName, &user.Birthdate, &user.Biography, &user.City,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "User not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error retrieving user from db", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
