@@ -14,6 +14,8 @@ EXPOSE 80
 
 COPY . /code/
 
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.1/migrate.linux-amd64.tar.gz | tar xvz -C /usr/local/bin
+
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

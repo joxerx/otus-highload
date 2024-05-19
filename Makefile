@@ -2,8 +2,20 @@
 compose = docker compose
 lines = 300
 
-init:
+ifeq (,$(wildcard .env))
+    $(error .env file not found)
+endif
+
+include .env
+export $(shell sed 's/=.*//' .env)
+
+DATABASE_URL = postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable
+
+init-env:
 	cp env.example .env
+
+make init:
+	init-env
 
 build:
 	sudo $(compose) up --build -d
@@ -14,8 +26,11 @@ down:
 stop:
 	sudo $(compose) stop
 
-web-build:
-	sudo $(compose) up --build -d web
+migrate-up:
+	sudo $(compose) exec web migrate -database $(DATABASE_URL) -path /code/db/migrations up
+
+migrate-down:
+	sudo $(compose) exec web migrate -database $(DATABASE_URL) -path /code/db/migrations down
 
 web-logs:
 	sudo $(compose) logs -f web
