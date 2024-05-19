@@ -11,11 +11,8 @@ export $(shell sed 's/=.*//' .env)
 
 DATABASE_URL = postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable
 
-init-env:
+init:
 	cp env.example .env
-
-make init:
-	init-env
 
 build:
 	sudo $(compose) up --build -d
