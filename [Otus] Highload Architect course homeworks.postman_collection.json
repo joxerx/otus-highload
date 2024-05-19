@@ -1,0 +1,254 @@
+{
+	"info": {
+		"_postman_id": "7b7d8566-00e0-481a-a995-b97f0ad33de3",
+		"name": "[Otus] Highload Architect course homeworks",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35034951"
+	},
+	"item": [
+		{
+			"name": "http://127.0.0.1:8000/user/login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"5\",\n    \"password\": \"vagonka\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/user/login",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"login"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "http://127.0.0.1:8000/user/login",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"5\",\n    \"password\": \"vagonka\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/user/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"user",
+								"login"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 19 May 2024 11:42:59 GMT"
+						},
+						{
+							"key": "Content-Length",
+							"value": "142"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"auth_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNSIsImV4cCI6MTcxNjIwNTM3OX0.YZEPvm2rs5EzMoMBCdBtzewfu32Di4FZllsu2u6b3II\"\n}"
+				}
+			]
+		},
+		{
+			"name": "http://127.0.0.1:8000/user/register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\":\"Paiton\",\n    \"last_name\":\"Nopper\",\n    \"birthdate\": \"1991-04-20\",\n    \"biography\": \"Skateboard\",\n    \"city\": \"Saint-Petersburg\",\n    \"password\": \"vagonka\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/user/register",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"register"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "http://127.0.0.1:8000/user/register",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\":\"Paiton\",\n    \"last_name\":\"Nopper\",\n    \"birthdate\": \"1991-04-20\",\n    \"biography\": \"Skateboard\",\n    \"city\": \"Saint-Petersburg\",\n    \"password\": \"vagonka\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/user/register",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"user",
+								"register"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 19 May 2024 11:42:48 GMT"
+						},
+						{
+							"key": "Content-Length",
+							"value": "16"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"user_id\": \"6\"\n}"
+				}
+			]
+		},
+		{
+			"name": "http://127.0.0.1:8000/user/get/4",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/user/get/4",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"get",
+						"4"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "http://127.0.0.1:8000/user/get/4",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/user/get/4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"user",
+								"get",
+								"4"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 19 May 2024 11:42:54 GMT"
+						},
+						{
+							"key": "Content-Length",
+							"value": "142"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"4\",\n    \"first_name\": \"Mongol\",\n    \"last_name\": \"Nopper\",\n    \"birthdate\": \"1991-04-20T00:00:00Z\",\n    \"biography\": \"Also nothing\",\n    \"city\": \"Saint-Petersburg\"\n}"
+				}
+			]
+		}
+	]
+}
