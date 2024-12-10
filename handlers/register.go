@@ -35,11 +35,11 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userID string
-	err = db.DB.QueryRow(
-		"INSERT INTO users (first_name, last_name, birthdate, biography, city, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-		newUser.FirstName, newUser.LastName, birthdate, newUser.Biography, newUser.City, hashedPassword,
-	).Scan(&userID)
+	query := `
+		INSERT INTO users (first_name, last_name, birthdate, biography, city, password) 
+		VALUES ($1, $2, $3, $4, $5, $6) 
+		RETURNING id`
+	userID, err := db.ExecuteInsertQuery(query, newUser.FirstName, newUser.LastName, birthdate, newUser.Biography, newUser.City, hashedPassword)
 	if err != nil {
 		http.Error(w, "Error inserting user into db", http.StatusInternalServerError)
 		return

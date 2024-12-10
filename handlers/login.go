@@ -13,21 +13,30 @@ import (
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var loginReq models.LoginRequest
-	err := json.NewDecoder(r.Body).Decode(&loginReq)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	var hashedPassword string
-	err = db.DB.QueryRow("SELECT password FROM users WHERE id = $1", loginReq.ID).Scan(&hashedPassword)
+	rows, err := db.ExecuteReadQuery("SELECT password FROM users WHERE id = $1", loginReq.ID)
 	if err != nil {
 		http.Error(w, "Invalid user ID or password", http.StatusUnauthorized)
 		return
 	}
+	defer rows.Close()
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(loginReq.Password))
-	if err != nil {
+	if !rows.Next() {
+		http.Error(w, "Invalid user ID or password", http.StatusUnauthorized)
+		return
+	}
+
+	var hashedPassword string
+	if err := rows.Scan(&hashedPassword); err != nil {
+		http.Error(w, "Error scanning password", http.StatusInternalServerError)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(loginReq.Password)); err != nil {
 		http.Error(w, "Invalid user ID or password", http.StatusUnauthorized)
 		return
 	}

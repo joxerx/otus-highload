@@ -37,3 +37,6 @@ logs:
 
 pg-shell:
 	sudo $(compose) exec db bash
+
+redis-cli:
+	sudo $(compose) exec redis redis-cli
