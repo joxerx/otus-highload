@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"id\": \"5\",\n    \"password\": \"vagonka\"\n}",
+					"raw": "{\n    \"id\": \"1060672\",\n    \"password\": \"vagonka\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -185,7 +185,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/user/get/4",
+					"raw": "http://127.0.0.1:8000/user/get/45555",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -197,7 +197,7 @@
 					"path": [
 						"user",
 						"get",
-						"4"
+						"45555"
 					]
 				}
 			},
@@ -249,6 +249,264 @@
 					"body": "{\n    \"id\": \"4\",\n    \"first_name\": \"Mongol\",\n    \"last_name\": \"Nopper\",\n    \"birthdate\": \"1991-04-20T00:00:00Z\",\n    \"biography\": \"Also nothing\",\n    \"city\": \"Saint-Petersburg\"\n}"
 				}
 			]
+		},
+		{
+			"name": "http://127.0.0.1:8000/user/search",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/user/search?first_name=Алек&last_name=Ан",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"search"
+					],
+					"query": [
+						{
+							"key": "first_name",
+							"value": "Алек"
+						},
+						{
+							"key": "last_name",
+							"value": "Ан"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/friend/set/{id}",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/friend/set/1060672",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"friend",
+						"set",
+						"1060672"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/friend/delete/{id}",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/friend/delete/1060672",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"friend",
+						"delete",
+						"1060672"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/post/create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"text\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lectus mauris ultrices eros in cursus turpis massa. In fermentum et sollicitudin ac orci. Faucibus ornare suspendisse sed nisi lacus sed. Vivamus at augue eget arcu dictum varius. Lobortis scelerisque fermentum dui faucibus in ornare quam. Feugiat in fermentum posuere urna nec tincidunt. Ullamcorper velit sed ullamcorper morbi tincidunt ornare. In hac habitasse platea dictumst quisque sagittis. Felis bibendum ut tristique et. Diam maecenas ultricies mi eget mauris pharetra et ultrices neque.\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/post/create",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"post",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/post/update",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"1\",\n    \"text\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lectus mauris ultrices eros in cursus turpis massa. In fermentum et sollicitudin ac orci. Faucibus ornare suspendisse sed nisi lacus sed. Vivamus at augue eget arcu dictum varius. Lobortis scelerisque fermentum dui faucibus in ornare quam. Feugiat in fermentum posuere urna nec tincidunt. Ullamcorper velit sed ullamcorper morbi tincidunt ornare. In hac habitasse platea dictumst quisque sagittis. Felis bibendum ut tristique et. Diam maecenas ultricies mi eget mauris pharetra et ultrices.\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/post/update",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"post",
+						"update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/post/delete/{id}",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/post/delete/1",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"post",
+						"delete",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/post/get/{id}",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/post/get/2",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"post",
+						"get",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/post/feed",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/post/feed",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"post",
+						"feed"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

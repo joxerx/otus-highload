@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -29,4 +30,31 @@ func GenerateToken(userID string) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func ValidateToken(tokenString string) (string, error) {
+	claims := &Claims{}
+
+	// Parse the token
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			return "", errors.New("invalid token signature")
+		}
+		return "", errors.New("invalid token")
+	}
+
+	if !token.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	// Check token expiration
+	if claims.ExpiresAt < time.Now().Unix() {
+		return "", errors.New("token expired")
+	}
+
+	return claims.UserID, nil
 }
