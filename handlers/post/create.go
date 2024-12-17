@@ -1,12 +1,16 @@
 package post
 
 import (
+	"log"
+
 	"encoding/json"
 	"net/http"
+	"strings"
+
 	"otus-highload/db"
 	"otus-highload/models"
+	"otus-highload/redis"
 	"otus-highload/utils"
-	"strings"
 )
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,13 +34,32 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	insertPostQuery := "INSERT INTO posts (user_id, text) VALUES ($1, $2) RETURNING id"
-	var postID string
-	err = db.MasterDB.QueryRow(insertPostQuery, authenticatedUserID, post.Text).Scan(&postID)
+	insertPostQuery := `
+		INSERT INTO posts (user_id, text) 
+		VALUES ($1, $2) 
+		RETURNING id, text, user_id, created_at;
+	`
+	err = db.MasterDB.QueryRow(insertPostQuery, authenticatedUserID, post.Text).Scan(
+		&post.ID,
+		&post.Text,
+		&post.UserID,
+		&post.CreatedAt,
+	)
 	if err != nil {
 		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error creating post"})
 		return
 	}
 
-	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"ID": postID})
+	subscribers, err := db.GetSubscribers(authenticatedUserID)
+	if err != nil {
+		log.Printf("Failed to retrieve subscribers: %v", err)
+	}
+
+	for _, subscriber := range subscribers {
+		if err := redis.EnqueueTask(subscriber, "append_post", post); err != nil {
+			log.Printf("Failed to enqueue task: %v", err)
+		}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, post)
 }

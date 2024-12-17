@@ -1,8 +1,10 @@
 package friend
 
 import (
+	"log"
 	"net/http"
 	"otus-highload/db"
+	"otus-highload/redis"
 	"otus-highload/utils"
 	"strings"
 )
@@ -46,6 +48,9 @@ func SetFriendHandler(w http.ResponseWriter, r *http.Request) {
 	if err := db.ExecuteWriteQuery(addFriendQuery, authenticatedUserID, userID); err != nil {
 		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error adding friend"})
 		return
+	}
+	if err := redis.EnqueueTask(authenticatedUserID, "create_feed", nil); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
 	}
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Friend successfully added"})
 }

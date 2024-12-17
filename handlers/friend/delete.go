@@ -1,8 +1,10 @@
 package friend
 
 import (
+	"log"
 	"net/http"
 	"otus-highload/db"
+	"otus-highload/redis"
 	"otus-highload/utils"
 	"strings"
 )
@@ -37,6 +39,10 @@ func DeleteFriendHandler(w http.ResponseWriter, r *http.Request) {
 	if rowsAffected == 0 {
 		utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "No friend record found to delete"})
 		return
+	}
+
+	if err := redis.EnqueueTask(authenticatedUserID, "create_feed", nil); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Friend successfully deleted"})

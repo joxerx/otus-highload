@@ -65,7 +65,6 @@ func ExecuteWriteQuery(query string, args ...interface{}) error {
 	}
 	defer stmt.Close()
 
-	// Execute the query
 	_, err = stmt.Exec(args...)
 	if err != nil {
 		log.Printf("Error executing query: %v\n", err)
@@ -96,4 +95,32 @@ func ExecuteUpdateQuery(query string, args ...interface{}) (int64, error) {
 	}
 
 	return rowsAffected, nil
+}
+
+func GetSubscribers(friendID string) ([]string, error) {
+	query := `SELECT user_id FROM friends WHERE friend_id = $1`
+
+	rows, err := ExecuteReadQuery(query, friendID)
+	if err != nil {
+		log.Printf("Failed to execute query to get subscribers: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subscribers []string
+	for rows.Next() {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
+			log.Printf("Failed to scan user_id: %v", err)
+			return nil, err
+		}
+		subscribers = append(subscribers, userID)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating over rows: %v", err)
+		return nil, err
+	}
+
+	return subscribers, nil
 }

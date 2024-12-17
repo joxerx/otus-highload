@@ -1,8 +1,10 @@
 package post
 
 import (
+	"log"
 	"net/http"
 	"otus-highload/db"
+	"otus-highload/redis"
 	"otus-highload/utils"
 	"strings"
 )
@@ -43,6 +45,16 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	if rowsAffected == 0 {
 		utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "No matching post found or already deleted"})
 		return
+	}
+
+	subscribers, err := db.GetSubscribers(authenticatedUserID)
+	if err != nil {
+		log.Fatalf("Failed to retrieve subscribers: %v", err)
+	}
+	for _, subscriber := range subscribers {
+		if err := redis.EnqueueTask(subscriber, "delete_post", map[string]string{"postID": postID}); err != nil {
+			log.Printf("Failed to enqueue task: %v", err)
+		}
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Post successfully deleted"})

@@ -2,8 +2,8 @@ package post
 
 import (
 	"net/http"
-	"otus-highload/db"
 	"otus-highload/models"
+	"otus-highload/redis"
 	"otus-highload/utils"
 	"strconv"
 	"strings"
@@ -32,39 +32,35 @@ func FeedHandler(w http.ResponseWriter, r *http.Request) {
 			limit = parsedLimit
 		}
 	}
-
 	if o := queryParams.Get("offset"); o != "" {
 		if parsedOffset, err := strconv.Atoi(o); err == nil && parsedOffset >= 0 {
 			offset = parsedOffset
 		}
 	}
+	feed := []models.Post{}
 
-	query := `
-		SELECT p.id, p.text
-		FROM posts p
-		JOIN friends f ON p.user_id = f.friend_id
-		WHERE f.user_id = $1
-		  AND p.visibility = 'public'
-		  AND p.is_deleted = false
-		ORDER BY p.created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-
-	rows, err := db.ExecuteReadQuery(query, authenticatedUserID, limit, offset)
-	if err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error retrieving feed"})
-		return
-	}
-	defer rows.Close()
-
-	var feed []models.Post
-	for rows.Next() {
-		var post models.Post
-		if err := rows.Scan(&post.ID, &post.Text); err != nil {
-			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error processing feed"})
+	if offset < 1000 {
+		redisPosts, err := redis.GetCachedPosts(authenticatedUserID, offset, limit)
+		if err != nil {
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve feed from cache"})
 			return
 		}
-		feed = append(feed, post)
+		feed = append(feed, redisPosts...)
+	}
+
+	if len(feed) < limit {
+		missing := limit - len(feed)
+		dbPosts, err := redis.FetchOlderPostsFromDB(authenticatedUserID, offset+len(feed), missing)
+		if err != nil {
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve feed from DB"})
+			return
+		}
+		feed = append(feed, dbPosts...)
+	}
+
+	if err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve feed"})
+		return
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, feed)

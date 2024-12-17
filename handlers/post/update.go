@@ -1,24 +1,21 @@
 package post
 
 import (
+	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"otus-highload/db"
 	"otus-highload/models"
+	"otus-highload/redis"
 	"otus-highload/utils"
 	"strings"
 )
 
 func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var post models.Post
-	err := json.NewDecoder(r.Body).Decode(&post)
-	if err != nil {
-		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
-		return
-	}
-
-	if post.ID == "" || post.Text == "" {
-		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Post ID and text are required"})
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil || post.ID == "" || post.Text == "" {
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 		return
 	}
 
@@ -35,23 +32,40 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `
+	updateQuery := `
 		UPDATE posts 
 		SET text = $1, updated_at = clock_timestamp() 
-		WHERE id = $2 AND 
-		user_id = $3 AND 
-		is_deleted = false
+		WHERE id = $2 AND user_id = $3 AND is_deleted = false
+		RETURNING id, text, user_id, created_at;
 	`
-	rowsAffected, err := db.ExecuteUpdateQuery(query, post.Text, post.ID, authenticatedUserID)
+
+	var updatedPost models.Post
+	err = db.MasterDB.QueryRow(updateQuery, post.Text, post.ID, authenticatedUserID).Scan(
+		&updatedPost.ID,
+		&updatedPost.Text,
+		&updatedPost.UserID,
+		&updatedPost.CreatedAt,
+	)
 	if err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error updating post"})
+		if err == sql.ErrNoRows {
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "No matching post found or already deleted"})
+		} else {
+			log.Printf("Failed to update post: %v", err)
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error updating post"})
+		}
 		return
 	}
 
-	if rowsAffected == 0 {
-		utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "No matching post found or already deleted"})
-		return
+	subscribers, err := db.GetSubscribers(authenticatedUserID)
+	if err != nil {
+		log.Printf("Failed to retrieve subscribers: %v", err)
 	}
 
-	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Post successfully updated"})
+	for _, subscriber := range subscribers {
+		if err := redis.EnqueueTask(subscriber, "update_post", updatedPost); err != nil {
+			log.Printf("Failed to enqueue task: %v", err)
+		}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, updatedPost)
 }

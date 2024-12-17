@@ -25,7 +25,7 @@ func SearchUserHandler(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT id, first_name, last_name, birthdate, biography, city FROM users WHERE first_name LIKE $1 AND last_name LIKE $2 ORDER BY id"
 	rows, err := db.ExecuteReadQuery(query, firstName+"%", lastName+"%")
 	if err != nil {
-		log.Println("Error executing query:", err) // Log detailed error
+		log.Println("Error executing query:", err)
 		http.Error(w, "Error executing query", http.StatusInternalServerError)
 		return
 	}
@@ -35,24 +35,22 @@ func SearchUserHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var user models.User
 		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Birthdate, &user.Biography, &user.City); err != nil {
-			log.Println("Error scanning user:", err) // Log scanning error
+			log.Println("Error scanning user:", err)
 			http.Error(w, "Error parsing users from db", http.StatusInternalServerError)
 			return
 		}
 		users = append(users, user)
 	}
 
-	// Check for any rows errors after the loop
 	if err := rows.Err(); err != nil {
-		log.Println("Error processing rows:", err) // Log rows error
+		log.Println("Error processing rows:", err)
 		http.Error(w, "Error processing users from db", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with the users list in JSON format
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(users); err != nil {
-		log.Println("Error encoding response:", err) // Log response encoding error
+		log.Println("Error encoding response:", err)
 		http.Error(w, "Error sending response", http.StatusInternalServerError)
 		return
 	}

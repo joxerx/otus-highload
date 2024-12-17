@@ -35,7 +35,6 @@ func GenerateToken(userID string) (string, error) {
 func ValidateToken(tokenString string) (string, error) {
 	claims := &Claims{}
 
-	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
@@ -51,7 +50,6 @@ func ValidateToken(tokenString string) (string, error) {
 		return "", errors.New("invalid token")
 	}
 
-	// Check token expiration
 	if claims.ExpiresAt < time.Now().Unix() {
 		return "", errors.New("token expired")
 	}
