@@ -2,9 +2,10 @@ package utils
 
 import (
 	"log"
+	"time"
+
 	"otus-highload/db"
 	"otus-highload/redis"
-	"time"
 )
 
 const batchSize = 1000
