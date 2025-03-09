@@ -1,0 +1,109 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "250m"
+    max-file: "4"
+
+services:
+  redis:
+    image: "redis/redis-stack:7.4.0-v0"
+    ports:
+      - 127.0.0.1:6479:6379
+      - 127.0.0.1:8101:8001
+    restart: always
+    volumes:
+      - ./.docker/redis-data:/data
+    networks:
+      - otus-highload-messages-net
+    logging: *default-logging
+
+  db: &postgres
+    image: postgres:14.0
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    command: postgres -c 'max_connections=3000'
+    volumes:
+      - ./.docker/postgres-data:/var/lib/postgresql/data
+    networks:
+      - otus-highload-messages-net
+    container_name: otus-highload-messages-db
+    logging: *default-logging
+
+  db-slave-1:
+    <<: *postgres
+    volumes:
+      - ./.docker/postgres-slave-1-data:/var/lib/postgresql/data
+    container_name: otus-highload-messages-db-slave-1
+    logging: *default-logging
+
+  db-slave-2:
+    <<: *postgres
+    volumes:
+      - ./.docker/postgres-slave-2-data:/var/lib/postgresql/data
+    container_name: otus-highload-messages-db-slave-2
+    logging: *default-logging
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    ports:
+      - "127.0.0.1:${DOCKER_EXPOSE_PORT-80}:${GO_PORT-80}"
+    depends_on:
+      - db
+    volumes:
+      - .:/code/
+    command: /runserver.sh
+    restart: unless-stopped
+    networks:
+      - otus-highload-messages-net
+    container_name: otus-highload-messages-web
+    logging: *default-logging
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: messages-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./.docker/prometheus-data/:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9190:9090"
+    networks:
+      - otus-highload-messages-net
+    logging: *default-logging
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: messages-cadvisor
+    ports:
+      - "8180:8080"
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - otus-highload-messages-net
+    logging: *default-logging
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: messages-grafana
+    ports:
+      - "3100:3000"
+    volumes:
+      - ./.docker/grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - otus-highload-messages-net
+    logging: *default-logging
+
+networks:
+  otus-highload-messages-net:
