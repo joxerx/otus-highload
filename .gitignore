@@ -3,3 +3,4 @@ venv/
 .env
 config.yaml
 .DS_Store
+src/main/LICENSE

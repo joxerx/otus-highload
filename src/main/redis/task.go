@@ -4,130 +4,92 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"otus-highload/models"
-	"sync"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
-const maxConcurrentTasks = 100
+var (
+	FeedStreamName          = os.Getenv("FEED_STREAM")
+	NotificationsStreamName = os.Getenv("NOTIFICATIONS_STREAM")
+	groupName               = os.Getenv("MAIN_CONSUMER_GROUP")
+	consumerName            = os.Getenv("MAIN_CONSUMER")
+)
 
-func StartTaskConsumer(stopChan <-chan struct{}) {
-	key := "task_queue"
-
-	semaphore := make(chan struct{}, maxConcurrentTasks)
-	var wg sync.WaitGroup
-
+func StartFeedTasksConsumer() {
 	for {
-		select {
-		case <-stopChan:
-			log.Println("Stopping task consumer...")
-			wg.Wait()
-			close(semaphore)
-			log.Println("Task consumer stopped.")
-			return
-		default:
-			result, err := RDB.BRPop(CTX(), 0, key).Result()
-			if err != nil {
-				log.Printf("Error consuming task: %v", err)
-				continue
-			}
+		ctx := CTX()
+		streams, err := RDB.XReadGroup(ctx, &redis.XReadGroupArgs{
+			Group:    groupName,
+			Consumer: consumerName,
+			Streams:  []string{FeedStreamName, ">"},
+			Count:    10,
+			Block:    time.Second,
+		}).Result()
 
-			if len(result) > 1 {
-				taskJSON := result[1]
-				log.Printf("Processing task: %s", taskJSON)
+		if err != nil && err != redis.Nil {
+			log.Printf("Failed to read from stream: %v", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
 
-				semaphore <- struct{}{}
-				wg.Add(1)
-
-				go func(taskJSON string) {
-					defer func() {
-						<-semaphore
-						wg.Done()
-					}()
-
-					var task map[string]interface{}
-					if err := json.Unmarshal([]byte(taskJSON), &task); err != nil {
-						log.Printf("Failed to parse task: %v", err)
+		for _, stream := range streams {
+			for _, message := range stream.Messages {
+				go func(msg redis.XMessage) {
+					if err := handleEntry(msg.Values); err != nil {
+						log.Printf("Failed to process message: %v", err)
 						return
 					}
 
-					userID, ok := task["userID"].(string)
-					if !ok {
-						log.Printf("Invalid userID in task: %s", taskJSON)
-						return
-					}
-
-					taskType, ok := task["task"].(string)
-					if !ok {
-						log.Printf("Invalid task type in task: %s", taskJSON)
-						return
-					}
-
-					data := task["data"]
-
-					log.Printf("Executing task type '%s' for user '%s'", taskType, userID)
-					err := HandleTask(taskType, userID, data)
-					if taskType == "create_feed" || taskType == "delete_post" {
-						setKey := "task_queue_set:" + taskType
-						taskID := userID + ":" + taskType
-						RDB.SRem(CTX(), setKey, taskID)
-					}
-
+					_, err := RDB.XAck(ctx, FeedStreamName, groupName, msg.ID).Result()
 					if err != nil {
-						log.Printf("Error executing task for user '%s': %v", userID, err)
+						log.Printf("Failed to acknowledge message %s: %v", msg.ID, err)
+					} else {
+						log.Printf("Message %s acknowledged", msg.ID)
 					}
-				}(taskJSON)
+				}(message)
 			}
 		}
 	}
 }
 
-func EnqueueTask(userID, taskType string, data interface{}) error {
-	task := map[string]interface{}{
-		"userID": userID,
-		"task":   taskType,
-		"data":   data,
-	}
-	taskJSON, err := json.Marshal(task)
-	if err != nil {
-		return err
+func handleEntry(values map[string]interface{}) error {
+	taskType, ok := values["taskType"].(string)
+	if !ok {
+		return fmt.Errorf("missing or invalid taskType")
 	}
 
-	key := "task_queue"
+	userID, ok := values["userID"].(string)
+	if !ok {
+		return fmt.Errorf("missing or invalid userID")
+	}
 
-	if taskType == "create_feed" || taskType == "delete_post" {
-		setKey := "task_queue_set:" + taskType
-		taskID := userID + ":" + taskType
+	// Handle data serialization
+	var data interface{}
 
-		exists, err := RDB.SIsMember(CTX(), setKey, taskID).Result()
-		if err != nil {
-			return err
+	if rawData, exists := values["data"]; exists {
+		dataStr, ok := rawData.(string)
+		if !ok {
+			return fmt.Errorf("invalid data format")
 		}
 
-		if exists {
-			log.Printf("Task %s for user %s already exists, skipping enqueue", taskType, userID)
-			return nil
-		}
-
-		if err := RDB.SAdd(CTX(), setKey, taskID).Err(); err != nil {
-			return err
-		}
-
-		if err := RDB.LPush(CTX(), key, taskJSON).Err(); err != nil {
-			return err
-		}
-		RDB.Expire(CTX(), setKey, 45*time.Hour)
-
-	} else {
-		if err := RDB.LPush(CTX(), key, taskJSON).Err(); err != nil {
-			return err
+		if taskType == "append_post" || taskType == "update_post" {
+			var post models.Post
+			if err := json.Unmarshal([]byte(dataStr), &post); err != nil {
+				return fmt.Errorf("failed to deserialize post: %v", err)
+			}
+			data = post
+		} else if taskType == "delete_post" {
+			data = dataStr
 		}
 	}
 
-	return nil
+	return handleTask(taskType, userID, data)
 }
 
-func HandleTask(taskType string, userID string, data interface{}) error {
+func handleTask(taskType string, userID string, data interface{}) error {
 	switch taskType {
 	case "create_feed":
 		return CreateWholeFeed(userID)
@@ -156,4 +118,21 @@ func HandleTask(taskType string, userID string, data interface{}) error {
 	default:
 		return fmt.Errorf("unknown task type: %s", taskType)
 	}
+}
+
+func CreateFeederGroup() error {
+	err := RDB.XGroupCreateMkStream(CTX(), FeedStreamName, groupName, "$").Err()
+	if err != nil {
+		if err.Error() == "BUSYGROUP Consumer Group name already exists" {
+			log.Println("Consumer group already exists. Skipping creation.")
+			return nil
+		}
+
+		// Handle other unexpected errors
+		log.Printf("Unexpected error creating group: %v", err)
+		return err
+	}
+
+	log.Printf("Feed group ready %s:%s", FeedStreamName, groupName)
+	return nil
 }

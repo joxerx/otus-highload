@@ -62,7 +62,7 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, subscriber := range subscribers {
-		if err := redis.EnqueueTask(subscriber, "update_post", updatedPost); err != nil {
+		if err := redis.EnqueueTask(redis.FeedStreamName, subscriber, "update_post", updatedPost); err != nil {
 			log.Printf("Failed to enqueue task: %v", err)
 		}
 	}

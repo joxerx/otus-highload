@@ -155,7 +155,7 @@ func GetCachedPosts(userID string, offset, limit int) ([]models.Post, error) {
 	}
 
 	if len(posts) == 0 {
-		if err := EnqueueTask(userID, "create_feed", nil); err != nil {
+		if err := EnqueueTask(FeedStreamName, userID, "create_feed", nil); err != nil {
 			log.Printf("Failed to enqueue task: %v", err)
 		}
 	}

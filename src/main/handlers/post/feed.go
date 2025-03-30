@@ -58,10 +58,5 @@ func FeedHandler(w http.ResponseWriter, r *http.Request) {
 		feed = append(feed, dbPosts...)
 	}
 
-	if err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve feed"})
-		return
-	}
-
 	utils.RespondWithJSON(w, http.StatusOK, feed)
 }

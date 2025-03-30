@@ -21,7 +21,7 @@ func enqueueTasksInBatches(userIDs []string) {
 		batch := userIDs[i:end]
 
 		for _, userID := range batch {
-			if err := redis.EnqueueTask(userID, "create_feed", nil); err != nil {
+			if err := redis.EnqueueTask(redis.FeedStreamName, userID, "create_feed", nil); err != nil {
 				log.Printf("Failed to enqueue task for user %s: %v", userID, err)
 			}
 		}
@@ -29,7 +29,7 @@ func enqueueTasksInBatches(userIDs []string) {
 	}
 }
 
-func enqueueTasksForAllUsers() {
+func EnqueueTasksForAllUsers() {
 	rows, err := db.MasterDB.Query("SELECT id FROM users")
 	if err != nil {
 		log.Printf("Error fetching user IDs: %v", err)
@@ -51,12 +51,12 @@ func enqueueTasksForAllUsers() {
 }
 
 func StartPeriodicTask() {
-	enqueueTasksForAllUsers()
+	EnqueueTasksForAllUsers()
 
 	ticker := time.NewTicker(periodicHours * time.Hour)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		enqueueTasksForAllUsers()
+		EnqueueTasksForAllUsers()
 	}
 }

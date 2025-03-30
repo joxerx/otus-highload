@@ -41,7 +41,7 @@ func DeleteFriendHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := redis.EnqueueTask(authenticatedUserID, "create_feed", nil); err != nil {
+	if err := redis.EnqueueTask(redis.FeedStreamName, authenticatedUserID, "create_feed", nil); err != nil {
 		log.Printf("Failed to enqueue task: %v", err)
 	}
 

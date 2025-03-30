@@ -10,11 +10,18 @@ WORKDIR /code
 COPY runserver.sh /
 RUN chmod +x /runserver.sh
 
+COPY runfeeder.sh /
+RUN chmod +x /runfeeder.sh
+
 EXPOSE 80
 
 COPY . /code/
 
 RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.1/migrate.linux-amd64.tar.gz | tar xvz -C /usr/local/bin
+
+RUN go install github.com/spf13/cobra-cli@latest
+
+RUN go build -o /app ./main.go
 
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh

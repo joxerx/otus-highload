@@ -49,7 +49,7 @@ func SetFriendHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error adding friend"})
 		return
 	}
-	if err := redis.EnqueueTask(authenticatedUserID, "create_feed", nil); err != nil {
+	if err := redis.EnqueueTask(redis.FeedStreamName, authenticatedUserID, "create_feed", nil); err != nil {
 		log.Printf("Failed to enqueue task: %v", err)
 	}
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Friend successfully added"})

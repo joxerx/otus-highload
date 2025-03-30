@@ -56,7 +56,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, subscriber := range subscribers {
-		if err := redis.EnqueueTask(subscriber, "append_post", post); err != nil {
+		if err := redis.EnqueueTask(redis.FeedStreamName, subscriber, "append_post", post); err != nil {
 			log.Printf("Failed to enqueue task: %v", err)
 		}
 	}

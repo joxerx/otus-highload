@@ -52,7 +52,7 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Failed to retrieve subscribers: %v", err)
 	}
 	for _, subscriber := range subscribers {
-		if err := redis.EnqueueTask(subscriber, "delete_post", map[string]string{"postID": postID}); err != nil {
+		if err := redis.EnqueueTask(redis.FeedStreamName, subscriber, "delete_post", map[string]string{"postID": postID}); err != nil {
 			log.Printf("Failed to enqueue task: %v", err)
 		}
 	}
