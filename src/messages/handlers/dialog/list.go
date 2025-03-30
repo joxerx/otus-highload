@@ -2,13 +2,17 @@ package dialog
 
 import (
 	"net/http"
+	"otus-highload-messages/db"
+	"otus-highload-messages/models"
 	"otus-highload-messages/utils"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 func ListDialogHandler(w http.ResponseWriter, r *http.Request) {
-	userID := strings.TrimPrefix(r.URL.Path, "/dialog/")
-	userID = strings.TrimSuffix(userID, "/list/")
+	vars := mux.Vars(r)
+	userID := vars["userId"]
 	if userID == "" {
 		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "User ID is required"})
 		return
@@ -26,18 +30,42 @@ func ListDialogHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired token"})
 		return
 	}
+	var shardKey string
+	if authenticatedUserID < userID {
+		shardKey = authenticatedUserID + ":" + userID
+	} else {
+		shardKey = userID + ":" + authenticatedUserID
+	}
 
-	// deleteFriendQuery := "DELETE FROM friends WHERE user_id = $1 AND friend_id = $2"
-	// rowsAffected, err := db.ExecuteUpdateQuery(deleteFriendQuery, authenticatedUserID, userID)
-	// if err != nil {
-	// 	utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error deleting friend"})
-	// 	return
-	// }
+	query := `
+		SELECT id, sender, recipient, content, created_at
+		FROM messages
+		WHERE shard_key = $1
+		ORDER BY created_at ASC;
+	`
 
-	// if rowsAffected == 0 {
-	// 	utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "No friend record found to delete"})
-	// 	return
-	// }
+	rows, err := db.ExecuteReadQuery(query, shardKey)
+	if err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to fetch messages"})
+		return
+	}
+	defer rows.Close()
 
-	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": authenticatedUserID})
+	// Collect messages
+	var messages []models.Message
+	for rows.Next() {
+		var msg models.Message
+		if err := rows.Scan(&msg.ID, &msg.Sender, &msg.Recipient, &msg.Content, &msg.CreatedAt); err != nil {
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to parse messages"})
+			return
+		}
+		messages = append(messages, msg)
+	}
+
+	if err := rows.Err(); err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error reading rows"})
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, messages)
 }

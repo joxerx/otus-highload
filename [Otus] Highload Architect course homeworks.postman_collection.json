@@ -388,7 +388,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDU1Nzc2MH0.goTlTrgfXD_w_lsHIvAmFryBhZqEYIJ0nUzzcxxnH4M",
 						"type": "text"
 					}
 				],
@@ -486,7 +486,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDAxODU4OH0.DA6nRbElN8BIG3BmhYndxxNITISyASJe00msmJhAj4E",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MiIsImV4cCI6MTczNDU1Nzc2MH0.goTlTrgfXD_w_lsHIvAmFryBhZqEYIJ0nUzzcxxnH4M",
 						"type": "text"
 					}
 				],
@@ -503,6 +503,75 @@
 					"path": [
 						"post",
 						"feed"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8100/dialog/{userId}/list",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MSIsImV4cCI6MTc0MzQ0MzA5MH0.cHfWRHg0KCZA-Ei3JdvZwELTwLPaT3ZQz5dLsA38_wI",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8100/dialog/1060672/list",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8100",
+					"path": [
+						"dialog",
+						"1060672",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8100/dialog/{userId}/send",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTA2MDY3MSIsImV4cCI6MTc0MzQ0MzA5MH0.cHfWRHg0KCZA-Ei3JdvZwELTwLPaT3ZQz5dLsA38_wI",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"text\": \"lets meet at 9 am tmr\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8100/dialog/1060672/send",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8100",
+					"path": [
+						"dialog",
+						"1060672",
+						"send"
 					]
 				}
 			},

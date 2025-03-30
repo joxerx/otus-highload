@@ -1,14 +1,21 @@
 package dialog
 
 import (
+	"encoding/json"
 	"net/http"
+	"otus-highload-messages/db"
+	"otus-highload-messages/models"
 	"otus-highload-messages/utils"
+
 	"strings"
+	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
-	userID := strings.TrimPrefix(r.URL.Path, "/dialog/")
-	userID = strings.TrimSuffix(userID, "/send/")
+	vars := mux.Vars(r)
+	userID := vars["userId"]
 	if userID == "" {
 		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "User ID is required"})
 		return
@@ -27,17 +34,39 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// deleteFriendQuery := "DELETE FROM friends WHERE user_id = $1 AND friend_id = $2"
-	// rowsAffected, err := db.ExecuteUpdateQuery(deleteFriendQuery, authenticatedUserID, userID)
-	// if err != nil {
-	// 	utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error deleting friend"})
-	// 	return
-	// }
+	var msgReq models.MessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&msgReq); err != nil {
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+		return
+	}
 
-	// if rowsAffected == 0 {
-	// 	utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "No friend record found to delete"})
-	// 	return
-	// }
+	if msgReq.Text == "" {
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Text field is required"})
+		return
+	}
 
-	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": authenticatedUserID})
+	var shardKey string
+	if authenticatedUserID < userID {
+		shardKey = authenticatedUserID + ":" + userID
+	} else {
+		shardKey = userID + ":" + authenticatedUserID
+	}
+
+	query := `
+		INSERT INTO messages (sender, recipient, content, created_at, shard_key)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id;
+	`
+
+	var messageID string
+	messageID, err = db.ExecuteInsertQuery(query, authenticatedUserID, userID, msgReq.Text, time.Now(), shardKey)
+	if err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to send message"})
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		"message":    "Message sent successfully",
+		"message_id": messageID,
+	})
 }
