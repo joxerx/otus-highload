@@ -13,9 +13,10 @@ DATABASE_URL = postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)
 
 init:
 	cp env.example .env
+	
 
 build:
-	sudo $(compose) up --build -d
+	sudo $(compose) up --build -d && sudo $(compose) -f patroni/docker-compose-citus.yml up -d
 
 down:
 	sudo $(compose) down

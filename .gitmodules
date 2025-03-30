@@ -1,0 +1,3 @@
+[submodule "src/messages/patroni"]
+	path = src/messages/patroni
+	url = https://github.com/patroni/patroni.git
