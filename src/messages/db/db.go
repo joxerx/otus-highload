@@ -10,11 +10,17 @@ import (
 )
 
 var MasterDB *sql.DB
-var SlaveDBs map[string]*sql.DB
+var BalancerDB *sql.DB
 
 func InitDB() {
+	MasterDB = connectToDB(os.Getenv("POSTGRES_MASTER_PORT"))
+	BalancerDB = connectToDB(os.Getenv("POSTGRES_BALANCER_PORT"))
+
+	log.Println("Databases initialized!")
+}
+
+func connectToDB(port string) *sql.DB {
 	host := os.Getenv("POSTGRES_HOST")
-	port := os.Getenv("POSTGRES_PORT")
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	dbname := os.Getenv("POSTGRES_DB")
@@ -24,15 +30,15 @@ func InitDB() {
 	}
 
 	connectionStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	MasterDB, err := sql.Open("postgres", connectionStr)
+	db, err := sql.Open("postgres", connectionStr)
 	if err != nil {
 		log.Fatalf("Error connecting to the database: %v", err)
 	}
 
-	if err := MasterDB.Ping(); err != nil {
+	if err := db.Ping(); err != nil {
 		log.Fatalf("Error pinging the database: %v", err)
 	}
 
-	log.Printf("Connected to database %s", host)
-	log.Println("Databases initialized!")
+	log.Printf("Connected to database %s:%s", host, port)
+	return db
 }

@@ -9,7 +9,7 @@ endif
 include .env
 export $(shell sed 's/=.*//' .env)
 
-DATABASE_URL = postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable
+DATABASE_URL = postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_MASTER_PORT)/$(POSTGRES_DB)?sslmode=disable
 
 init:
 	cp env.example .env && sudo docker build -f patroni/Dockerfile.citus -t patroni-citus patroni
