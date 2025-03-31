@@ -41,7 +41,7 @@ func EnqueueTask(streamName string, userID string, taskType string, data interfa
 
 	// Add event to Redis stream
 	msgID, err := RDB.XAdd(CTX(), &redis.XAddArgs{
-		Stream: FeedStreamName,
+		Stream: streamName,
 		Values: eventData,
 	}).Result()
 

@@ -13,6 +13,9 @@ RUN chmod +x /runserver.sh
 COPY runfeeder.sh /
 RUN chmod +x /runfeeder.sh
 
+COPY runnotifier.sh /
+RUN chmod +x /runnotifier.sh
+
 EXPOSE 80
 
 COPY . /code/

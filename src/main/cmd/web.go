@@ -31,7 +31,7 @@ var webCmd = &cobra.Command{
 			}
 			log.Println("Database connections closed.")
 		}()
-
+		go redis.StartNotificationConsumer()
 		r := router.NewRouter()
 		port := os.Getenv("GO_PORT")
 		if port == "" {

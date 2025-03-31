@@ -4,6 +4,7 @@ import (
 	"otus-highload/handlers/friend"
 	"otus-highload/handlers/post"
 	"otus-highload/handlers/user"
+	"otus-highload/websocket"
 
 	"github.com/gorilla/mux"
 )
@@ -23,6 +24,8 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/post/delete/{id}", post.DeletePostHandler).Methods("PUT")
 	router.HandleFunc("/post/get/{id}", post.GetPostHandler).Methods("GET")
 	router.HandleFunc("/post/feed", post.FeedHandler).Methods("GET")
+
+	router.HandleFunc("/post/feed/posted", websocket.HandleWebSocket).Methods("GET")
 
 	return router
 }

@@ -1,11 +1,10 @@
-package utils
+package redis
 
 import (
 	"log"
 	"time"
 
 	"otus-highload/db"
-	"otus-highload/redis"
 )
 
 const batchSize = 1000
@@ -21,7 +20,7 @@ func enqueueTasksInBatches(userIDs []string) {
 		batch := userIDs[i:end]
 
 		for _, userID := range batch {
-			if err := redis.EnqueueTask(redis.FeedStreamName, userID, "create_feed", nil); err != nil {
+			if err := EnqueueTask(FeedStreamName, userID, "create_feed", nil); err != nil {
 				log.Printf("Failed to enqueue task for user %s: %v", userID, err)
 			}
 		}

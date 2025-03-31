@@ -1,4 +1,4 @@
 #!/bin/bash
 source .env
 
-/app feeder
+/app consumer --mode=feeder
