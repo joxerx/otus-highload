@@ -2,11 +2,13 @@ package dialog
 
 import (
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
+	"math/rand"
 	"net/http"
-	"otus-highload-messages/db"
 	"otus-highload-messages/models"
+	"otus-highload-messages/redis"
 	"otus-highload-messages/utils"
-
 	"strings"
 	"time"
 
@@ -45,23 +47,40 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var shardKey string
+	var chatID string
 	if authenticatedUserID < userID {
-		shardKey = authenticatedUserID + ":" + userID
+		chatID = fmt.Sprintf("chat:%s:%s", authenticatedUserID, userID)
 	} else {
-		shardKey = userID + ":" + authenticatedUserID
+		chatID = fmt.Sprintf("chat:%s:%s", userID, authenticatedUserID)
 	}
 
-	query := `
-		INSERT INTO messages (sender, recipient, content, created_at, shard_key)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id;
-	`
+	createdAt := time.Now()
 
-	var messageID string
-	messageID, err = db.ExecuteInsertQuery(query, authenticatedUserID, userID, msgReq.Text, time.Now(), shardKey)
+	// Generate a unique message ID
+	now := time.Now().Unix()         // current Unix time in seconds
+	randPart := rand.Intn(1_000_000) // random 6-digit number
+	h := fnv.New64()
+	h.Write([]byte(authenticatedUserID))
+	hashInt := int64(h.Sum64())
+	senderNum := hashInt % 1_000_000
+	messageID := int((now%1_000_000_000)*1_000_000+int64(randPart)) + int(senderNum)
+
+	msg := models.Message{
+		ID:        messageID,
+		Sender:    authenticatedUserID,
+		Recipient: userID,
+		Content:   msgReq.Text,
+		CreatedAt: createdAt.String(),
+	}
+
+	data, err := json.Marshal(msg)
 	if err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to send message"})
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+		return
+	}
+
+	if err := redis.RDB.RPush(redis.CTX(), chatID, data).Err(); err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to store message in Redis"})
 		return
 	}
 

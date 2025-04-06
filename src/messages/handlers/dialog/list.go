@@ -1,11 +1,14 @@
 package dialog
 
 import (
+	"encoding/json"
 	"net/http"
-	"otus-highload-messages/db"
 	"otus-highload-messages/models"
+	"otus-highload-messages/redis"
 	"otus-highload-messages/utils"
 	"strings"
+
+	"fmt"
 
 	"github.com/gorilla/mux"
 )
@@ -30,41 +33,29 @@ func ListDialogHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired token"})
 		return
 	}
-	var shardKey string
+
+	// Consistent chat ID
+	var chatID string
 	if authenticatedUserID < userID {
-		shardKey = authenticatedUserID + ":" + userID
+		chatID = fmt.Sprintf("chat:%s:%s", authenticatedUserID, userID)
 	} else {
-		shardKey = userID + ":" + authenticatedUserID
+		chatID = fmt.Sprintf("chat:%s:%s", userID, authenticatedUserID)
 	}
 
-	query := `
-		SELECT id, sender, recipient, content, created_at
-		FROM messages
-		WHERE shard_key = $1
-		ORDER BY created_at ASC;
-	`
-
-	rows, err := db.ExecuteReadQuery(query, shardKey)
+	// Get all messages
+	rawMessages, err := redis.RDB.LRange(redis.CTX(), chatID, 0, -1).Result()
 	if err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to fetch messages"})
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to read messages from Redis"})
 		return
 	}
-	defer rows.Close()
 
-	// Collect messages
 	var messages []models.Message
-	for rows.Next() {
+	for _, raw := range rawMessages {
 		var msg models.Message
-		if err := rows.Scan(&msg.ID, &msg.Sender, &msg.Recipient, &msg.Content, &msg.CreatedAt); err != nil {
-			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to parse messages"})
-			return
+		if err := json.Unmarshal([]byte(raw), &msg); err != nil {
+			continue // skip invalid messages
 		}
 		messages = append(messages, msg)
-	}
-
-	if err := rows.Err(); err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Error reading rows"})
-		return
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, messages)
