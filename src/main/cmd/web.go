@@ -24,10 +24,8 @@ var webCmd = &cobra.Command{
 			if db.MasterDB != nil {
 				db.MasterDB.Close()
 			}
-			for _, slaveDB := range db.SlaveDBs {
-				if slaveDB != nil {
-					slaveDB.Close()
-				}
+			if db.SlaveDB != nil {
+				db.SlaveDB.Close()
 			}
 			log.Println("Database connections closed.")
 		}()

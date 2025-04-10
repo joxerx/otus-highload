@@ -10,17 +10,11 @@ import (
 )
 
 var MasterDB *sql.DB
-var SlaveDBs map[string]*sql.DB
+var SlaveDB *sql.DB
 
 func InitDB() {
 	MasterDB = connectToDB(os.Getenv("POSTGRES_HOST"))
-
-	slaveIDs := []string{"slave-1", "slave-2"} // Define slave IDs
-	SlaveDBs = make(map[string]*sql.DB)
-
-	for _, slaveID := range slaveIDs {
-		SlaveDBs[slaveID] = connectToDB(fmt.Sprintf("db-%s", slaveID))
-	}
+	SlaveDB = connectToDB(os.Getenv("POSTGRES_BALANCER_HOST"))
 
 	log.Println("Databases initialized!")
 }

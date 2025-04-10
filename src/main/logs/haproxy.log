@@ -1,0 +1,13 @@
+2025-04-10 22:14:00 [WARNING]  (1) : config : log format ignored for proxy 'stats' since it has no log address.
+2025-04-10 22:14:00 [WARNING]  (1) : config : log format ignored for proxy 'nodes' since it has no log address.
+2025-04-10 22:14:00 [NOTICE]   (1) : New worker #1 (8) forked
+2025-04-10 23:13:54 [WARNING]  (8) : Server nodes/db-slave-2 is DOWN, reason: Layer4 timeout, check duration: 2001ms. 1 active and 0 backup servers left. 1 sessions active, 0 requeued, 0 remaining in queue.
+2025-04-10 23:19:17 [WARNING]  (8) : Server nodes/db-slave-2 is UP, reason: Layer7 check passed, code: 0, info: "PostgreSQL server is ok", check duration: 2ms. 2 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
+2025-04-10 23:19:49 [WARNING]  (1) : Exiting Master process...
+2025-04-10 23:19:49 [WARNING]  (8) : Proxy stats stopped (cumulated conns: FE: 503, BE: 2).
+2025-04-10 23:19:49 [WARNING]  (8) : Proxy nodes stopped (cumulated conns: FE: 2888, BE: 2888).
+2025-04-10 23:19:49 [WARNING]  (8) : Stopping frontend GLOBAL in 0 ms.
+2025-04-10 23:19:59 [WARNING]  (1) : config : log format ignored for proxy 'stats' since it has no log address.
+2025-04-10 23:19:59 [WARNING]  (1) : config : log format ignored for proxy 'nodes' since it has no log address.
+2025-04-10 23:19:59 [NOTICE]   (1) : New worker #1 (8) forked
+2025-04-10 23:21:23 [WARNING]  (8) : Server nodes/db-slave-1 is DOWN, reason: Layer4 timeout, check duration: 2001ms. 1 active and 0 backup servers left. 5 sessions active, 0 requeued, 0 remaining in queue.

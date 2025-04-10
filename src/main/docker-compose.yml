@@ -5,6 +5,32 @@ x-logging: &default-logging
     max-file: "4"
 
 services:
+  haproxy:
+    image: haproxy:2.4
+    restart: "no"
+    networks:
+      - otus-highload-net
+    volumes:
+      - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
+    ports:
+      - "8405:8404" # /stats
+    container_name: otus-highload-haproxy
+    logging: *default-logging
+
+
+  nginx:
+    image: nginx:1.21
+    restart: on-failure
+    networks:
+      - otus-highload-net
+    volumes:
+      - "./default.conf:/etc/nginx/conf.d/default.conf"
+    ports:
+      - "8000:80"
+      - "8025:8080"
+    container_name: otus-highload-nginx
+    logging: *default-logging
+
   redis:
     image: "redis/redis-stack:7.4.0-v0"
     ports:
@@ -44,14 +70,12 @@ services:
     container_name: otus-highload-db-slave-2
     logging: *default-logging
 
-  web:
+  web-1: &web
     build:
       context: .
       dockerfile: Dockerfile
     env_file:
       - ./.env
-    ports:
-      - "127.0.0.1:${DOCKER_EXPOSE_PORT-80}:${GO_PORT-80}"
     depends_on:
       - db
     volumes:
@@ -60,9 +84,14 @@ services:
     restart: unless-stopped
     networks:
       - otus-highload-net
-    container_name: otus-highload-web
+    container_name: otus-highload-web-1
     logging: *default-logging
-
+  web-2:
+    <<: *web
+    container_name: otus-highload-web-2
+  web-3:
+    <<: *web
+    container_name: otus-highload-web-3
   feeder:
     build:
       context: .
