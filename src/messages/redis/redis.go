@@ -9,6 +9,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var (
+	ErrEventsStreamName = os.Getenv("ERR_EVENTS_STREAM")
+	EventsStreamName    = os.Getenv("EVENTS_STREAM")
+	groupName           = os.Getenv("MAIN_CONSUMER_GROUP")
+	consumerName        = os.Getenv("MAIN_CONSUMER")
+)
+
 var RDB *redis.Client
 
 func InitRedis() {

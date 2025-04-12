@@ -56,9 +56,8 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 
 	createdAt := time.Now()
 
-	// Generate a unique message ID
-	now := time.Now().Unix()         // current Unix time in seconds
-	randPart := rand.Intn(1_000_000) // random 6-digit number
+	now := time.Now().Unix()
+	randPart := rand.Intn(1_000_000)
 	h := fnv.New64()
 	h.Write([]byte(authenticatedUserID))
 	hashInt := int64(h.Sum64())
@@ -84,6 +83,7 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	redis.PushEvent("increaseCounter", chatID, userID, messageID)
 	utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 		"message":    "Message sent successfully",
 		"message_id": messageID,

@@ -93,7 +93,7 @@ func handleEvent(values map[string]interface{}) error {
 		return fmt.Errorf("failed to unmarshal event data: %w", err)
 	}
 
-	key := fmt.Sprintf("unreadCount:%d:%d", event.DialogID, event.RecipientID)
+	key := fmt.Sprintf("unreadCount:%s:%s", event.DialogID, event.RecipientID)
 
 	switch event.EventType {
 	case "increaseCounter":
