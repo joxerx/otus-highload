@@ -5,20 +5,20 @@ x-logging: &default-logging
     max-file: "4"
 
 services:
-  redis:
+  redis-counter:
     image: "redis/redis-stack:7.4.0-v0"
     ports:
-      - 127.0.0.1:6479:6379
-      - 127.0.0.1:8101:8001
+      - 127.0.0.1:6579:6379
+      - 127.0.0.1:8201:8001
     restart: always
     volumes:
       - ./.docker/redis-data:/data
     networks:
-      - otus-highload-messages-net
+      - otus-highload-counter-net
       - otus-highload-messages-bridge
     logging: *default-logging
 
-  web:
+  web: &web
     build:
       context: .
       dockerfile: Dockerfile
@@ -31,30 +31,29 @@ services:
     command: /runserver.sh
     restart: unless-stopped
     networks:
-      - otus-highload-messages-net
-      - otus-highload-messages-bridge
-    container_name: otus-highload-messages-web
+      - otus-highload-counter-net
+    container_name: otus-highload-counter-web
     logging: *default-logging
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: messages-prometheus
+    container_name: counter-prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./.docker/prometheus-data/:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
-      - "9190:9090"
+      - "9290:9090"
     networks:
-      - otus-highload-messages-net
+      - otus-highload-counter-net
     logging: *default-logging
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
-    container_name: messages-cadvisor
+    container_name: counter-cadvisor
     ports:
-      - "8180:8080"
+      - "8280:8080"
     privileged: true
     volumes:
       - /:/rootfs:ro
@@ -62,23 +61,23 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
     networks:
-      - otus-highload-messages-net
+      - otus-highload-counter-net
     logging: *default-logging
 
   grafana:
     image: grafana/grafana:latest
-    container_name: messages-grafana
+    container_name: counter-grafana
     ports:
-      - "3100:3000"
+      - "3200:3000"
     volumes:
       - ./.docker/grafana-data:/var/lib/grafana
     depends_on:
       - prometheus
     networks:
-      - otus-highload-messages-net
+      - otus-highload-counter-net
     logging: *default-logging
 
 networks:
-  otus-highload-messages-net:
+  otus-highload-counter-net:
   otus-highload-messages-bridge:
     external: True
