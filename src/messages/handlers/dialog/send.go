@@ -6,6 +6,7 @@ import (
 	"hash/fnv"
 	"math/rand"
 	"net/http"
+	"otus-highload-messages/metrics"
 	"otus-highload-messages/models"
 	"otus-highload-messages/redis"
 	"otus-highload-messages/utils"
@@ -16,15 +17,25 @@ import (
 )
 
 func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	vars := mux.Vars(r)
 	userID := vars["userId"]
+	handlerName := "sendMessage"
+
+	defer func() {
+		duration := time.Since(start).Seconds()
+		metrics.RequestDuration.WithLabelValues(handlerName, "POST").Observe(duration)
+	}()
+
 	if userID == "" {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "400").Inc()
 		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "User ID is required"})
 		return
 	}
 
 	token := r.Header.Get("Authorization")
 	if token == "" || !strings.HasPrefix(token, "Bearer ") {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "401").Inc()
 		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Authorization token is required"})
 		return
 	}
@@ -32,17 +43,20 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 
 	authenticatedUserID, err := utils.ValidateToken(token)
 	if err != nil {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "401").Inc()
 		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired token"})
 		return
 	}
 
 	var msgReq models.MessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&msgReq); err != nil {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "400").Inc()
 		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 		return
 	}
 
 	if msgReq.Text == "" {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "400").Inc()
 		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Text field is required"})
 		return
 	}
@@ -74,11 +88,13 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(msg)
 	if err != nil {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "500").Inc()
 		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
 		return
 	}
 
 	if err := redis.RDB.RPush(redis.CTX(), chatID, data).Err(); err != nil {
+		metrics.RequestCounter.WithLabelValues(handlerName, "POST", "500").Inc()
 		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to store message in Redis"})
 		return
 	}
@@ -88,4 +104,5 @@ func SendDialogHandler(w http.ResponseWriter, r *http.Request) {
 		"message":    "Message sent successfully",
 		"message_id": messageID,
 	})
+	metrics.RequestCounter.WithLabelValues(handlerName, "POST", "201").Inc()
 }

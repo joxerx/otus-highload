@@ -12,6 +12,7 @@ import (
 
 func main() {
 	redis.InitRedis()
+	redis.CreateEventGroup()
 	go redis.StartEventConsumer()
 	r := router.NewRouter()
 

@@ -35,48 +35,6 @@ services:
     container_name: otus-highload-counter-web
     logging: *default-logging
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: counter-prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./.docker/prometheus-data/:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-    ports:
-      - "9290:9090"
-    networks:
-      - otus-highload-counter-net
-    logging: *default-logging
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: counter-cadvisor
-    ports:
-      - "8280:8080"
-    privileged: true
-    volumes:
-      - /:/rootfs:ro
-      - /var/run/docker.sock:/var/run/docker.sock:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - otus-highload-counter-net
-    logging: *default-logging
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: counter-grafana
-    ports:
-      - "3200:3000"
-    volumes:
-      - ./.docker/grafana-data:/var/lib/grafana
-    depends_on:
-      - prometheus
-    networks:
-      - otus-highload-counter-net
-    logging: *default-logging
-
 networks:
   otus-highload-counter-net:
   otus-highload-messages-bridge:
